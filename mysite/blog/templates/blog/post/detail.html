@@ -1,0 +1,83 @@
+{% extends "blog/base.html" %}
+{% load blog_tags %}
+
+{% block title %}
+  {% if post %}
+    {{ post.title }}
+  {% elif recipe %}
+    {{ recipe.title }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <!-- Blog Post Detail Section -->
+  {% if post %}
+    <h1>{{ post.title }}</h1>
+    <p class="date">Published {{ post.publish }} by {{ post.author }}</p>
+    {{ post.body|markdown }}
+    <p>
+      <a href="{% url 'blog:post_share' post.id %}">Share this post</a>
+    </p>
+
+    <h2>Similar posts</h2>
+    {% for post in similar_posts %}
+      <p>
+        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+      </p>
+    {% empty %}
+      <p>There are no similar posts yet.</p>
+    {% endfor %}
+
+    {% with comments.count as total_comments %}
+      <h2>{{ total_comments }} comment{{ total_comments|pluralize }}</h2>
+    {% endwith %}
+    {% for comment in comments %}
+      <div class="comment">
+        <p class="info">Comment {{ forloop.counter }} by {{ comment.name }} on {{ comment.created }}</p>
+        {{ comment.body|linebreaks }}
+      </div>
+    {% empty %}
+      <p>There are no comments yet.</p>
+    {% endfor %}
+
+    {% include "blog/post/includes/comment_form.html" %}
+  {% endif %}
+
+  <!-- Recipe Detail Section -->
+  {% if recipe %}
+    <h1>{{ recipe.title }}</h1>
+    <p class="date">Created by {{ recipe.author }} on {{ recipe.created }}</p>
+
+    <h2>Ingredients</h2>
+    <p>{{ recipe.ingredients|linebreaks }}</p>
+
+    <h2>Instructions</h2>
+    <p>{{ recipe.instructions|linebreaks }}</p>
+
+    <h2>Tags</h2>
+    <p>
+      {% for tag in recipe.tags.all %}
+        <a href="{% url 'blog:recipe_list_by_tag' tag.slug %}">{{ tag.name }}</a>
+        {% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+
+    <!-- Recipe Rating Section -->
+    <h2>Rate this recipe</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ rating_form.as_p }}
+      <button type="submit">Submit Rating</button>
+    </form>
+    <p>Current Rating: {{ recipe.rating }} / 5</p>
+
+    <h2>Similar Recipes</h2>
+    {% for similar_recipe in similar_recipes %}
+      <p>
+        <a href="{{ similar_recipe.get_absolute_url }}">{{ similar_recipe.title }}</a>
+      </p>
+    {% empty %}
+      <p>There are no similar recipes yet.</p>
+    {% endfor %}
+  {% endif %}
+{% endblock %}
